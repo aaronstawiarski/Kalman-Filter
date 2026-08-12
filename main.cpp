@@ -84,38 +84,37 @@ int main () {
 
 // now, plot all of the data
   
-tiledlayout(2, 1);
 
 
 // POSITION
-auto frame1 = nexttile();
 
-title(frame1, "Position versus time");
-
-plot(frame1, real_xs, "b-");
-hold(frame1, on);
-
-plot(frame1, lower_bound_pos, "r--");
-plot(frame1, upper_bound_pos, "r--");
-plot(frame1, mus_pos, "r-");
-
+figure();
+title("Position versus time");
+xlabel("Time (s)");
+ylabel("Position (m)");
+plot( real_xs, "b-");
+hold( on);
+plot( mus_pos, "r-");
+plot( lower_bound_pos, "r--");
+plot( upper_bound_pos, "r--");
+legend({"True Position", "Estimated Position", "-2σ", "+2σ"});
 
 // VELOCITY
-auto frame2 = nexttile();
-
-title(frame2, "Velocity versus time");
-
-plot(frame2, real_vs, "b-");
-hold(frame2, on);
-
-plot(frame2, lower_bound_vel, "r--");
-plot(frame2, upper_bound_vel, "r--");
-plot(frame2, mus_vel, "r-");
+figure();
+title( "Velocity versus time");
+xlabel( "Time (s)");
+ylabel( "Velocity (m/s)");
+plot( real_vs, "b-");
+hold( on);
+plot( mus_vel, "r-");
+plot( lower_bound_vel, "r--");
+plot( upper_bound_vel, "r--");
+legend({"True Velocity", "Estimated Velocity", "-2σ", "+2σ"});
 
 
 show();
 
-    return 0;
+return 0;
 }
 
 
