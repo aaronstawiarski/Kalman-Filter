@@ -20,6 +20,7 @@ covs= []
 real_xs = []
 real_vs = []
 
+
 for i in range (NUM_STEPS) :
     covs.append(kf.cov)
     mus.append(kf.mean)
@@ -48,3 +49,5 @@ plt.plot([mu[1] - 2*np.sqrt(cov[1,1]) for mu, cov in zip(mus,covs)], 'b--')
 
 plt.show()
 plt.ginput(2)
+
+print(covs)
