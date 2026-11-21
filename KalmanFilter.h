@@ -9,7 +9,7 @@
     class KalmanFilter {
         
         public:
-         KalmanFilter(float initial_x, float initial_y, float accel_variance);
+         KalmanFilter(double pos_x, double pos_y, double vel_x, double vel_y, double accel_x,, double accel_y, double accel_variance);
         //defining all needed vectors
         Eigen::MatrixXd  x ;
         Eigen::MatrixXd  P ;
@@ -34,5 +34,5 @@
 
         Eigen::MatrixXd z ;
         Eigen::MatrixXd H;
-        float accel_variance;
+        double accel_variance;
     };

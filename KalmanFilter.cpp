@@ -10,10 +10,17 @@ using namespace matplot;
 
 // define  global variables for # of meas/predicted values
 
-const int iX = 0;
-const int iV = 1;
-const int num_vars = iV + 1;
-const int measuredvals_num = num_vars - 1;
+// for camera, will start with 2D pos and 2D vel (also estimate and y accel)
+
+
+
+
+// 4 measured vals, but 6 total vals in state vector
+
+const int measuredvals_num = 4;
+const int state_num = 6;
+
+
 
 // defines the two main updated steps globally, so all functions can use the same one
 Eigen::MatrixXd new_x(2,1);
@@ -25,12 +32,11 @@ Eigen::MatrixXd new_P;
 // inside constructor , define the GRV (desired filtered parameters)
     // also same for variances
     // define P matrix
- KalmanFilter::KalmanFilter (float initial_x, float initial_v, float accel_variance){
-     this -> x = Eigen::MatrixXd(num_vars,1);
-     this -> x(iX) = initial_x;
-     this -> x(iV) = initial_v;
+ KalmanFilter::KalmanFilter (double pos_x, double pos_y, double vel_x, double vel_y, double accel_x, double accel_y, double accel_variance){
+     this -> x = Eigen::MatrixXd(state_num,1);
+             x << pos_x, pos_y, vel_x, vel_y, accel_x, accel_y;
      this ->accel_variance = accel_variance;
-     this -> P =  Eigen::MatrixXd::Identity(num_vars,num_vars);
+     this -> P =  Eigen::MatrixXd::Identity(state_num, state_num);
      return ;
 }
 
@@ -39,11 +45,12 @@ Eigen::MatrixXd new_P;
 void KalmanFilter::PredictionStep (float dt) { 
 
     // state extrapolation
-    this -> F = Eigen::MatrixXd::Identity(num_vars,num_vars);
+    this -> F = Eigen::MatrixXd::Identity(state_num, state_num);
+    // work out 6x6 computation by hand
     this -> F(iX,iV) = dt;
     new_x = F * this -> x ; // no input control for now, so G * u is zero
 
-    this -> G = Eigen::MatrixXd (num_vars, 1);
+    this -> G = Eigen::MatrixXd (state_num, 1);
     G(iX) = 0.5 * dt* dt;
     G(iV) = dt;
 
