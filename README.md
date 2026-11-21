@@ -36,7 +36,23 @@ The filter uses **Eigen** for matrix operations and **Matplot++** for visualizat
 
 - C++17
 - Eigen
-- Matplot++D
+- Matplot++
+
+## Read ISS ephemeris measurements
+
+These commands build and run the parser on macOS with Eigen and Matplot++ installed through Homebrew.
+
+```sh
+c++ -std=c++17 main.cpp KalmanFilter.cpp DataFile.cpp \
+  -I"$(brew --prefix eigen)/include/eigen3" \
+  -I"$(brew --prefix matplotplusplus)/include" \
+  -L"$(brew --prefix matplotplusplus)/lib" -lmatplot -o main
+./main "ISS OEM J2K EPH.txt"
+```
+
+Each output row contains the timestamp followed by `x y z vx vy vz`. The timestamp is copied verbatim, including fractional seconds. The supplied ISS file uses UTC. Position and velocity retain their OEM units of kilometers and kilometers per second. [CCSDS Orbit Data Messages, §6.6.2](https://ccsds.org/Pubs/502x0b2s.pdf)
+
+C++ callers can use `DataFile{}.data_parser(path)` to get a vector of records with `.timestamp` and `.state` fields. Run `./main` without a file argument to start the existing simulation.
 
 ## Future Work
 

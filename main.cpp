@@ -1,12 +1,16 @@
 #include <vector>
 #include <random>
 #include <cmath>
+#include <exception>
+#include <iomanip>
 #include <iostream>
+#include <limits>
 #include <matplot/matplot.h>
 #include <Eigen/Dense>
 #include "KalmanFilter.h"
 #include <list>
 #include <algorithm>
+#include "DataFile.h"
 
 using namespace matplot;
 
@@ -23,7 +27,6 @@ using namespace matplot;
 // plot w/ uncertainty bounds, could be 2 standard deviations each way
 
 // defining global variables, so scope is throughout program in main
-
 
 const float dt = 0.1;
 const int num_steps = 20;
@@ -49,7 +52,29 @@ std::list <float> upper_bound_vel={};
  std::vector <float> mus_vel;
 
 
-int main () {
+int main(int argc, char* argv[]) {
+    if (argc > 2) {
+        std::cerr << "Usage: " << argv[0] << " [oem-file]\n";
+        return 1;
+    }
+    if (argc == 2) {
+        try {
+            const auto measurements = DataFile{}.data_parser(argv[1]);
+            std::cout << std::setprecision(std::numeric_limits<double>::max_digits10);
+            for (const auto& measurement : measurements) {
+                std::cout << measurement.timestamp;
+                for (double component : measurement.state) {
+                    std::cout << ' ' << component;
+                }
+                std::cout << '\n';
+            }
+        } catch (const std::exception& error) {
+            std::cerr << error.what() << '\n';
+            return 1;
+        }
+        return 0;
+    }
+
     //random seed declaration
     std::random_device rd;
     std::mt19937 gen(rd());
