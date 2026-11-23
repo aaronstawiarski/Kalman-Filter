@@ -9,7 +9,7 @@
     class KalmanFilter {
         
         public:
-         KalmanFilter(double pos_x, double pos_y, double vel_x, double vel_y, double accel_x,, double accel_y, double accel_variance);
+         KalmanFilter(double pos_x, double pos_y, double vel_x, double vel_y, double accel_x, double accel_y, double jerk_variance);
         //defining all needed vectors
         Eigen::MatrixXd  x ;
         Eigen::MatrixXd  P ;
@@ -26,13 +26,13 @@
 
         // define the prediction and update functions
 
-        void PredictionStep(float dt); // desired time step
+        void PredictionStep(float dt, float jerk_variance); // desired time step
 
-        void UpdateStep(float meas_value, float meas_variance); //  inputs are z and R, respectively
+        void UpdateStep(std::vector<float> meas_value, float meas_variance); //  inputs are z and R, respectively
 
         private:
 
         Eigen::MatrixXd z ;
         Eigen::MatrixXd H;
-        double accel_variance;
+        double jerk_variance;
     };

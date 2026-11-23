@@ -23,7 +23,7 @@ const int state_num = 6;
 
 
 // defines the two main updated steps globally, so all functions can use the same one
-Eigen::MatrixXd new_x(2,1);
+Eigen::MatrixXd new_x(state_num,1);
 Eigen::MatrixXd new_P;
 
 
@@ -32,30 +32,42 @@ Eigen::MatrixXd new_P;
 // inside constructor , define the GRV (desired filtered parameters)
     // also same for variances
     // define P matrix
- KalmanFilter::KalmanFilter (double pos_x, double pos_y, double vel_x, double vel_y, double accel_x, double accel_y, double accel_variance){
+ KalmanFilter::KalmanFilter (double pos_x, double pos_y, double vel_x, double vel_y, double accel_x, double accel_y, double jerk_variance){
      this -> x = Eigen::MatrixXd(state_num,1);
              x << pos_x, pos_y, vel_x, vel_y, accel_x, accel_y;
-     this ->accel_variance = accel_variance;
+     this -> jerk_variance = jerk_variance;
      this -> P =  Eigen::MatrixXd::Identity(state_num, state_num);
      return ;
 }
 
 
 
-void KalmanFilter::PredictionStep (float dt) { 
+void KalmanFilter::PredictionStep (float dt, float jerk_variance) { 
 
     // state extrapolation
     this -> F = Eigen::MatrixXd::Identity(state_num, state_num);
     // work out 6x6 computation by hand
-    this -> F(iX,iV) = dt;
-    new_x = F * this -> x ; // no input control for now, so G * u is zero
+    F(0, 2)= dt;
+    F(0, 4) = 0.5 * dt * dt;
+    F(1,3) = dt;
+    F(1, 5) = 0.5 * dt * dt;
+    F(2,4) = dt;
+    F(3, 5) = dt;
+    new_x = F * this -> x;
 
-    this -> G = Eigen::MatrixXd (state_num, 1);
-    G(iX) = 0.5 * dt* dt;
-    G(iV) = dt;
+    const double step = dt;
+    const double dt2 = step * step;
+    const double dt3 = dt2 * step;
+    G.resize(state_num, 2);
+    // The columns map per-step x and y jerk into position, velocity, and acceleration.
+    G << dt3 / 6.0, 0.0,
+         0.0,       dt3 / 6.0,
+         dt2 / 2.0, 0.0,
+         0.0,       dt2 / 2.0,
+         step,      0.0,
+         0.0,       step;
 
-    // define Process Noise Covariance
-    Eigen::MatrixXd Q = G * G.transpose() * this -> accel_variance * this-> accel_variance;
+    const Eigen::MatrixXd Q = jerk_variance * (G * G.transpose());
 
     // extrapolate uncertainty
 
@@ -69,20 +81,22 @@ void KalmanFilter::PredictionStep (float dt) {
 }
 
 
-void KalmanFilter::UpdateStep(float meas_value, float meas_variance) {
+void KalmanFilter::UpdateStep(std::vector<float> meas_value, float meas_variance) {
     // obtaining the private variables
-    Eigen::MatrixXd ztemp(1,1);
-    ztemp << meas_value;
+    Eigen::MatrixXd ztemp(4,1); // temp for the give ISS data 
+    ztemp << meas_value[0], meas_value[1], meas_value[2], meas_value[3];
     this -> setmeasvec(ztemp);
     this -> z = this ->getmeasvec();
-    Eigen::MatrixXd Htemp(1, 2);
-    Htemp << 1 , 0;
+    Eigen::MatrixXd Htemp(1, 6);
+    Htemp << 1 , 1, 1, 1, 0, 0;
     this-> setObsMatrix(Htemp);
     this -> H = this ->getObsMatrix();
 
     Eigen::MatrixXd R;
      R = Eigen::MatrixXd(measuredvals_num,measuredvals_num);
-     R(0) = meas_variance ;
+     for(int i = 0; i < 4; i++ ){
+     R(i, i) = meas_variance;
+     }
     Eigen::MatrixXd y = z - H * (this -> x); 
     Eigen::MatrixXd S = H * (this -> P) * ((this -> H).transpose()) + R ;
     Eigen::MatrixXd K = (this -> P) * ((this -> H).transpose()) * (S.inverse()) ;
